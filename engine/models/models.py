@@ -35,15 +35,15 @@ class MlxModel(VlmModel):
                                 "<|im_start|>assistant\n"
                             )
                             
-    def generate(self,image_path:str)->str:
+    def generate(self,image_path:str):
         
-        response = self.generate_captions_func(self.processor,
-                                               self.model,
+        response = self.generate_captions_func(self.model,
+                                               self.processor,
                                                image=[image_path],
                                                prompt = self.system_prompt,
                                                temp=0,
                                                max_tokens=600,
                                                verbose=True) 
-        return response.text
+        return response
 
 
