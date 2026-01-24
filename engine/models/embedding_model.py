@@ -1,3 +1,4 @@
+import numpy as np
 class EmbeddingModel():
     
     def __init__(self):
@@ -22,14 +23,17 @@ class EmbeddingModel():
 
         norm = self.mx.linalg.norm(embedding,axis=-1,keepdims=True)
         normalized_vector = embedding / self.mx.maximum(norm, 1e-12)
-    
-        return normalized_vector
+
+        float_vector = normalized_vector.astype(self.mx.float32)
+        flattened_vector = np.array(float_vector[0]).tolist()
+
+        return flattened_vector
 
 
-model = EmbeddingModel()
-caption = "MAIN SUBJECTS: A vintage red car. SPATIAL LAYOUT: Centered. ENVIRONMENT: Sunset."
-vector = model.get_vector_embeddings(caption)
+# model = EmbeddingModel()
+# caption = "MAIN SUBJECTS: A vintage red car. SPATIAL LAYOUT: Centered. ENVIRONMENT: Sunset."
+# vector = model.get_vector_embeddings(caption)
 
-print(f"Vector Dimensions: {vector.shape[1]}") # 1024 for 0.6B model
-print(f"First 5 values: {vector[0, :5]}")
+# print(f"Vector Dimensions: {vector.shape[1]}") # 1024 for 0.6B model
+# print(f"First 5 values: {vector[0, :5]}")
 
