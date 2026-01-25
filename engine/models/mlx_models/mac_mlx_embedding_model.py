@@ -1,7 +1,7 @@
 import numpy as np
 import mlx.core as mx
+from abc import ABC,abstractmethod
 from mlx_embeddings.utils import load
-
 
 class MLxEmbeddingModel():
     

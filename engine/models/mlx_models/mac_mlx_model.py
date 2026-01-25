@@ -5,7 +5,7 @@ from mlx_vlm import load,generate
 
 class VlmModel(ABC):
     @abstractmethod
-    def generate(self):
+    def generate_captions(self):
         pass 
 
 class MlxModel(VlmModel):
@@ -38,7 +38,7 @@ class MlxModel(VlmModel):
                                 "<|im_start|>assistant\n"
                             )
                             
-    def generate(self,image_path:str):
+    def generate_captions(self,image_path:str):
         
         response = self.generate_captions_func(self.model,
                                                self.processor,

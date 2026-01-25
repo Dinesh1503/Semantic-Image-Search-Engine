@@ -1,28 +1,18 @@
 from transformers import AutoProcessor, AutoModelForImageTextToText
 import torch
-from abc import ABC,abstractmethod
 from PIL import Image
 import re
 
-
-class VlmModel(ABC):
-    @abstractmethod
-    def generate(self):
-        pass 
-
-class HuggingFaceTransformersModel():
+from abstract_model_class import VlmModel
+class HuggingFacesModel(VlmModel):
 
     def __init__(self):
-        
-        # Load model directly
-        # self.auto_processor = AutoProcessor
-        # self.auto_model_image_to_text = AutoModelForImageTextToText
 
         self.model_id = "Qwen/Qwen3-VL-8B-Instruct"
         self.processor = AutoProcessor.from_pretrained(self.model_id)
         self.model = AutoModelForImageTextToText.from_pretrained(
             self.model_id,
-            device_map="auto",       # Uses CPU/MPS/GPU automatically
+            device_map="auto",       
             dtype=torch.float16
         )
 
