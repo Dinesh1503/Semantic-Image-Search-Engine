@@ -1,10 +1,11 @@
 import numpy as np
-class EmbeddingModel():
+import mlx.core as mx
+from mlx_embeddings.utils import load
+
+
+class MLxEmbeddingModel():
     
     def __init__(self):
-
-        import mlx.core as mx
-        from mlx_embeddings.utils import load
 
         self.model_name = "mlx-community/Qwen3-Embedding-0.6B-4bit-DWQ"
         self.mx = mx
@@ -29,6 +30,7 @@ class EmbeddingModel():
 
         return flattened_vector
 
+# class 
 
 # model = EmbeddingModel()
 # caption = "MAIN SUBJECTS: A vintage red car. SPATIAL LAYOUT: Centered. ENVIRONMENT: Sunset."

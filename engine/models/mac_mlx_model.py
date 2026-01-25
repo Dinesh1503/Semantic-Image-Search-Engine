@@ -1,4 +1,7 @@
 from abc import ABC,abstractmethod
+from PIL import Image
+import re
+from mlx_vlm import load,generate
 
 class VlmModel(ABC):
     @abstractmethod
@@ -9,7 +12,7 @@ class MlxModel(VlmModel):
 
     def __init__(self):
         
-        from mlx_vlm import load,generate
+       
 
         self.model_name = "mlx-community/Qwen3-VL-8B-Instruct-4bit"
         self.model, self.processor = load(self.model_name)
