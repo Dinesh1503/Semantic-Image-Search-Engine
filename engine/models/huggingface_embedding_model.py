@@ -1,6 +1,7 @@
 from sentence_transformers import SentenceTransformer
+from models.abstract_model_class import EmbeddingModel
 
-class HuggingFaceEmbeddingModel():
+class HuggingFaceEmbeddingModel(EmbeddingModel):
 
     def __init__(self):
 

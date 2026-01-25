@@ -1,11 +1,14 @@
 import os
-from models.models import VlmModel,MlxModel 
-from models.embedding_model import EmbeddingModel
 import numpy as np
+
+from models.huggingface_embedding_model import HuggingFaceEmbeddingModel
+from models.huggingface_model import HuggingFaceModel
+
 class Inference: 
 
     def __init__(self):
-        pass
+        self.caption_model = HuggingFaceModel()
+        self.embedding_model = HuggingFaceEmbeddingModel()
     
     def get_index(self,dir_path:str):
 
@@ -18,53 +21,42 @@ class Inference:
         
         return image_info 
 
-    def get_image_captions(self,model:VlmModel,image_indexes:list)->list:
-
-        # import gc
-        # import mlx.core as mx
+    def get_image_captions(self,image_indexes:list)->list:
 
         captions = []
         for i in image_indexes:
             image_path = i["image_path"]
-            response = model.generate(image_path)
-            captions.append(response.text)
-            break
-            
-        print(captions)
-
-        # del model
-        # gc.collect()
-        # mx.metal.clear_cache()
-
+            response = self.caption_model.generate_captions(image_path)
+            captions.append(response)
         return captions
     
-    def vectorise_captions(self,embedding_model:EmbeddingModel,caption:str):
+    def vectorise_captions(self,caption:str):
 
-        vector = embedding_model.get_vector_embeddings(caption)
+        vector = self.embedding_model.get_caption_vectors(caption)
 
         return vector
+    
+    def vectorise_query(self,query:str):
 
+        vector = self.embedding_model.get_query_vectors(query)
 
-# inf = Inference()
-# model = MlxModel()
-
-# print(image_info,type(image_info))
-# inf.get_image_captions(model,image_info)
-
-vector_model = EmbeddingModel()
-# caption_model = MlxModel()
+        return vector
+    
 
 inf = Inference()
+index = inf.get_index("/Users/dinesh/Project/Semantic Image Search Engine/engine/test_data/a/b")
 
-# image_info = inf.get_index(path)
+print("\n index: ",index)
 
-# captions = inf.get_image_captions(caption_model,image_info)
+captions = inf.get_image_captions(index)
 
-captions = ['Main Subjects: Grass blades in the foreground, trees in the background, sun positioned centrally behind the trees. Spatial Layout: Grass occupies the lower portion of the frame; trees are in the mid-ground, silhouetted against the sky; the sun is behind the trees. Attributes: Grass is green with yellowish highlights from sunlight; trees are dark silhouettes; sun emits bright, warm light with lens flare and bokeh. Environment: Bright, direct sunlight; clear sky with minimal cloud cover; likely late afternoon or early morning based on sun angle and warm tones.']
+print("\n captions:",captions)
+caption_vector = inf.vectorise_captions(captions[0])
 
-vectors = []
+query = "a starry night in the forest"
+query_vector = inf.vectorise_query(query)
 
-for i in captions:
-    vectors.append(inf.vectorise_captions(vector_model,i))
-    break
-print(vectors)
+print(len(caption_vector),len(query_vector))
+
+inf.embedding_model.compute_similarity(caption_vector,query_vector)
+

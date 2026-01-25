@@ -3,8 +3,8 @@ import torch
 from PIL import Image
 import re
 
-from abstract_model_class import VlmModel
-class HuggingFacesModel(VlmModel):
+from models.abstract_model_class import VlmModel
+class HuggingFaceModel(VlmModel):
 
     def __init__(self):
 
@@ -58,7 +58,8 @@ class HuggingFacesModel(VlmModel):
         
         caption = self.processor.decode(outputs[0][inputs["input_ids"].shape[-1]:],skip_special_tokens=True)
         caption = re.sub(r"<\|.*?\|>", "", caption).strip()
-        print(caption)
+
+        return caption
 
 
 # model = HuggingFaceTransformersModel()
