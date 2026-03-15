@@ -1,21 +1,34 @@
 from sentence_transformers import SentenceTransformer
 from models.abstract_model_class import EmbeddingModel
-
+from pathlib import Path
 class HuggingFaceEmbeddingModel(EmbeddingModel):
 
     def __init__(self):
 
-        self.model_name = "Qwen/Qwen3-Embedding-0.6B"
+        # self.model_name = "Qwen/Qwen3-Embedding-0.6B"
 
-        self.model = SentenceTransformer(self.model_name)
+        # self.model = SentenceTransformer(self.model_name)
         
+        # self.user_query_prompt = "query"
+
+        local_path = Path("/Users/dinesh/Project/Semantic Image Search Engine/engine/models/qwen3-embedding-0.6b")
+
+        if local_path.exists():
+            self.model = SentenceTransformer(
+                str(local_path),
+                local_files_only=True,
+                device="mps"
+            )
+        else:
+            self.model = SentenceTransformer("Qwen/Qwen3-Embedding-0.6B",device="mps")
+
         self.user_query_prompt = "query"
     
-    def get_caption_vectors(self,caption:str)->list:
+    def get_caption_vectors(self,caption:list[str])->list:
 
-        vector = self.model.encode(caption,normalize_embeddings=True)
+        vector = self.model.encode(caption,normalize_embeddings=True,batch_size=32)
 
-        return vector
+        return vector.tolist()
 
     def get_query_vectors(self,user_query:str)->list:
 

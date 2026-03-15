@@ -10,14 +10,13 @@ dependencies = [
     "pgvector>=0.4.2",
     "psycopg[binary]>=3.3.2",
     "sqlalchemy>=2.0.45",
-    "torch==2.9.1", # Pin to a specific stable version
-    "torchvision==0.24.1", # Match torchvision to torch 2.9.1
+    "torch>=2.9.1",
+    "torchvision>=0.17.2",
     "dotenv-python>=0.0.1",
-    "transformers>=4.48.0", # Qwen3 often requires 4.48+
+    "transformers>=4.57.6",
     "mlx==0.30.1",
     "mlx-lm==0.29.1",
     "mlx-metal==0.30.1",
-    "sentence-transformers>=3.0.0",
+    "sentence-transformers>=5.2.0",
     "mlx-embeddings>=0.0.5",
-    "accelerate>=1.12.0",
 ]
