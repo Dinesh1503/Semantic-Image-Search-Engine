@@ -162,7 +162,7 @@ Configuration lives in `engine/.env`, which is gitignored. Copy `engine/.env.exa
 | Variable | Purpose |
 |----------|---------|
 | `DB`, `DB_USER`, `PASSWORD`, `DB_HOST`, `PORT` | PostgreSQL connection details |
-| `IMAGES_PATH` | Directory served under `/images` (default `engine/test_data/a`) |
+| `IMAGES_PATH` | Absolute path to the directory served under `/images`. The `engine/test_data/a` default is not committed, so set this or the server refuses to start |
 | `MODELS_PATH` | Directory of locally downloaded model weights (default `engine/models`) |
 | `ALLOWED_ORIGINS` | Comma-separated CORS origins (default `http://localhost:5173`) |
 | `API_KEY` | When set, `/search` requires a matching `X-API-Key` header |

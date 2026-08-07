@@ -15,15 +15,16 @@ CAPTIONS = [
     ("img_10.jpg", "MAIN SUBJECTS: Single jellyfish with translucent blue bell adorned with white spots, extending multiple thin tentacles with white tips, additional blurred jellyfish forms in background. SPATIAL LAYOUT: Central jellyfish occupies right-center foreground, smaller out-of-focus jellyfish scattered in background at lower left, suspended against uniform dark backdrop. ATTRIBUTES: Bell is semi-transparent blue with white dot patterning, tentacles are thin and thread-like with bright white tips, body has gelatinous texture with faint internal structures, surrounding particles appear suspended in water. ENVIRONMENT: Uniform black void suggesting deep aquatic setting under artificial illumination, no natural light, ambient glow from jellyfish itself creating high contrast.", "2022-12-30T09:54:36"),
 ]
 
-model = HuggingFaceEmbeddingModel()
+if __name__ == "__main__":
+    model = HuggingFaceEmbeddingModel()
 
-vectors = model.get_caption_vectors([caption for _, caption, _ in CAPTIONS])
+    vectors = model.get_caption_vectors([caption for _, caption, _ in CAPTIONS])
 
-save_records(
-    [
-        (name, str(images_dir() / name), caption, vector, captured_at)
-        for (name, caption, captured_at), vector in zip(CAPTIONS, vectors)
-    ]
-)
+    save_records(
+        [
+            (name, str(images_dir() / name), caption, vector, captured_at)
+            for (name, caption, captured_at), vector in zip(CAPTIONS, vectors)
+        ]
+    )
 
-print("done")
+    print("done")
