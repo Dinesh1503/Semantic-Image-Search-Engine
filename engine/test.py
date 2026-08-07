@@ -1,130 +1,54 @@
 from inference import Inference
 from database.db import VectorDatabase
-from dotenv import load_dotenv
-import os
-from pathlib import Path
-import json
-import numpy as np
-
-from datetime import datetime
-
-load_dotenv()
+from paths import images_dir
+from storage import load_records, save_records
 
 
-def populate_db(db:VectorDatabase,inf:Inference):
+def build_records(inf: Inference):
+    """Caption, vectorise and persist every image in `images_dir()` to data.json."""
+    indexes = inf.get_index(str(images_dir()))
+    captions = inf.get_image_captions(indexes)
+    vectors = inf.vectorise_captions(captions)
+    captured_at = [inf.get_image_datetime(i["image_path"]) for i in indexes]
 
-#     base_path = Path("/Users/dinesh/Project/Semantic Image Search Engine/engine/test_data/a")
-
-#     indexes = inf.get_index(base_path)
-#     print("\n Indexes: ",indexes)
-  
-#     metadata = []
-#     # captions = inf.get_image_captions(indexes)
-
-#     captions = [
-#     "MAIN SUBJECTS: Grass blades in foreground, blurred trees in background, bright sun source. SPATIAL LAYOUT: Grass occupies lower third of frame sharply focused, trees form out-of-focus silhouette behind grass on either side of central sunburst, sun centered at mid-frame height. ATTRIBUTES: Grass is greenish-yellow with fine texture and sharp edges from shallow depth of field, trees appear dark brown-black with indistinct foliage, sunlight emits radial lens flare streaks and circular bokeh highlights. ENVIRONMENT: Bright direct illumination suggests clear sky during golden hour, no clouds or precipitation, high contrast between illuminated grass tips and shadowed areas beneath.",
-
-#     "MAIN SUBJECTS: Dark rugged volcanic rocks, crashing ocean waves forming white foam spray, open sea surface extending to horizon. SPATIAL LAYOUT: Rocks occupy foreground and midground partially submerged at base, wave impact centered on rocky outcrop, open water fills background under pale overcast sky. ATTRIBUTES: Rocks are rough and uneven with dark brownish-black tones, foam spray is bright white and dynamic, seawater varies from deep blue-green to lighter turquoise near splash zone. ENVIRONMENT: Diffuse daylight with no strong shadows, overcast or hazy conditions, calm wind implied by moderate swell rather than large stormy waves.",
-
-#     "MAIN SUBJECTS: Silhouettes of coniferous trees, sloped roofline with chimney and antenna structure, distant mountain ridgeline, star field. SPATIAL LAYOUT: Trees occupy left-center foreground, roofline extends diagonally from lower right to upper center, mountains lie behind trees at horizon level. ATTRIBUTES: Trees and roof appear uniformly black due to silhouette effect, sky transitions from deep indigo near top to faint purplish-pink gradient toward horizon, stars are small white dots scattered across sky. ENVIRONMENT: Nighttime setting under clear skies, minimal ambient light, static scene with still air and no precipitation.",
-
-#     "MAIN SUBJECTS: Single pine cone resting on a tree stump cross-section. SPATIAL LAYOUT: Pine cone centrally positioned atop the flat circular surface of the stump which occupies most of the frame, blurred background suggests surrounding wood or earth. ATTRIBUTES: Pine cone has woody scales in concentric layers with brown to dark-brown hues and lighter dried edges, stump displays rough cracked bark texture with visible radial growth rings, all components appear dry and static. ENVIRONMENT: Diffuse even lighting suggesting overcast conditions or indirect sunlight, no harsh shadows, cool ambient tone from subdued color saturation.",
-
-#     "MAIN SUBJECTS: Narrow stone-paved path winding through dense forest, tall slender tree trunks lining both sides, low-lying green vegetation on sloped ground. SPATIAL LAYOUT: Path curves gently upward from foreground to midground flanked by vertical trunks, foliage covers uneven terrain on either side with right-side slope rising slightly, trees form continuous canopy overhead. ATTRIBUTES: Path is dark gray-brown with rough texture from soil and stones, tree bark varies from smooth to rugged, undergrowth shows muted greens with occasional yellowish tones, deep shadows between trunks. ENVIRONMENT: Dim lighting with sparse natural illumination filtering from upper canopy, suggests overcast conditions or late afternoon, still air with no wind indicators.",
-
-#     "MAIN SUBJECTS: Two palm trees in silhouette with large fronds extending outward, colorful sunset sky. SPATIAL LAYOUT: Primary palm occupies left portion with trunk vertical and fronds arching toward center-right, secondary palm partially visible in lower-right quadrant, both set against open sky. ATTRIBUTES: Fronds exhibit fine linear leaflets in dense clusters, trunks show natural ridge texture, all silhouettes are uniformly dark due to backlighting, sky gradient transitions from vivid orange and yellow at horizon through pink to pale lavender higher up. ENVIRONMENT: Lighting from below horizon indicates sunset conditions, strong silhouette effect on vegetation, clear atmosphere without haze or precipitation.",
-
-#     "MAIN SUBJECTS: Aerial view of plowed agricultural fields, narrow paved road, small cluster of trees surrounding a farm building complex, winding water channel. SPATIAL LAYOUT: Road divides frame into two vertical sections, large rectangular fields flank both sides, tree-clustered property centered in lower half, water channel curves along left edge. ATTRIBUTES: Fields show uniform brownish-tan tilled earth texture with some lighter green patches, road is smooth gray, trees display autumnal yellow-orange-green foliage with dense shadows beneath, sunlight creates strong directional shadows. ENVIRONMENT: Clear sky with bright overhead midday sun producing sharp shadows, no clouds or precipitation, dry and static scene.",
-
-#     "MAIN SUBJECTS: Decorative metal lantern with glowing warm light interior, wooden crate surface it rests on, blurred outdoor background with people and foliage. SPATIAL LAYOUT: Lantern centered in frame on flat wooden crate surface in foreground, secondary candle visible to right, blurred figures and trees occupy background. ATTRIBUTES: Lantern has dark metal frame with glass panels emitting warm yellow-white light, wooden crate is light natural wood grain, background shows green bokeh foliage and circular light orbs from shallow depth of field. ENVIRONMENT: Nighttime outdoor setting with artificial illumination from lantern as primary light source, ambient glow from background lights, still air with no wind indicators.",
-
-#     "MAIN SUBJECTS: Single jellyfish with translucent blue bell adorned with white spots, extending multiple thin tentacles with white tips, additional blurred jellyfish forms in background. SPATIAL LAYOUT: Central jellyfish occupies right-center foreground, smaller out-of-focus jellyfish scattered in background at lower left, suspended against uniform dark backdrop. ATTRIBUTES: Bell is semi-transparent blue with white dot patterning, tentacles are thin and thread-like with bright white tips, body has gelatinous texture with faint internal structures, surrounding particles appear suspended in water. ENVIRONMENT: Uniform black void suggesting deep aquatic setting under artificial illumination, no natural light, ambient glow from jellyfish itself creating high contrast."
-# ]
-    
-#     print("\n Captions Length: ",len(captions))
-#     vectors = inf.vectorise_captions(captions) 
-    
-#     metadata = [inf.get_image_datetime(i["image_path"]) for i in indexes]
-
-#     data = [
-#         (index["image_filename"], index["image_path"], caption, vector, meta)
-#         for index, caption, vector, meta in zip(indexes, captions, vectors, metadata)
-#     ]
+    save_records(
+        [
+            (index["image_filename"], index["image_path"], caption, vector, meta)
+            for index, caption, vector, meta in zip(indexes, captions, vectors, captured_at)
+        ]
+    )
 
 
-#     save_to_file(data)
-
-    file_data = load_from_file()
+def populate_db(db: VectorDatabase):
+    file_data = load_records()
 
     print(len(file_data))
 
     db.connect()
-
     db.check_data()
 
     db.delete_all_data()
     db.check_data()
 
     db.add_data(file_data)
-
     db.check_data()
 
 
+def test():
+    inf = Inference()
 
-
-def save_to_file(data: list, output_path: str = "data.json"):
-    serialisable = [
-        (file_name, file_path, caption, vector, meta.isoformat() if isinstance(meta, datetime) else meta)
-        for file_name, file_path, caption, vector, meta in data
+    mock_results = [
+        ('golden_retriever_1.jpg', '/images/dogs/golden_retriever_1.jpg', 0.8842),  # Should be GOOD
+        ('yellow_lab.jpg', '/images/dogs/yellow_lab.jpg', 0.5210),                # Should be GOOD
+        ('brown_cat.jpg', '/images/cats/brown_cat.jpg', 0.3155),                 # Should be BAD
+        ('park_bench.jpg', '/images/scenery/park_bench.jpg', 0.1201),            # Should be IRRELEVANT
+        ('night_sky.jpg', '/images/space/night_sky.jpg', -0.0542)                # Should be IRRELEVANT
     ]
-    with open(output_path, "w") as f:
-        json.dump(serialisable, f, indent=2)
+    classified_results = inf.classify_results(mock_results)
 
-def load_from_file(input_path: str = "data.json"):
-    with open(input_path, "r") as f:
-        raw = json.load(f)
-    
-    return [
-        (
-            row[0],
-            row[1],
-            row[2],
-            row[3],                            # keep as plain list, same as test_populate_db
-            json.dumps({"datetime": row[4]})   # metadata as JSON string, matches your schema
-        )
-        for row in raw
-    ]
+    print(classified_results)
 
 
+if __name__ == "__main__":
 
-
-
-inf = Inference()
-
-
-db_name = os.getenv("DB")
-user = os.getenv("DB_USER")
-port = os.getenv("PORT")
-password = os.getenv("PASSWORD")
-
-db = VectorDatabase(db_name,password,user,port)
-
-# populate_db(db,inf)
-
-populate_db(db,inf)
-# db.cur.execute("SELECT name, caption FROM images;")
-# print(db.cur.fetchall())
-
-
-# user_query = "sea and waves spashing on rocks"
-
-# vectorised = inf.vectorise_query(user_query)
-# print("\n vectorsied: ",vectorised)
-
-# results = db.retrieve_data(vectorised)
-# print("\n resutls: ",results)
-
-# classified_results = inf.classify_results(results)
-# print(classified_results)
-
-
+    populate_db(VectorDatabase.from_env())
