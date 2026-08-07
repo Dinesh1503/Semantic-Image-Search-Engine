@@ -1,4 +1,5 @@
 import psycopg
+from psycopg.conninfo import make_conninfo
 from dotenv import load_dotenv
 import os
 import numpy as np
@@ -8,29 +9,45 @@ class VectorDatabase():
     INSERT_QUERY = """INSERT INTO images (name,path,caption,embedding,metadata) 
                     VALUES (%s,%s,%s,%s,%s)"""
 
-    def __init__(self,db:str,password:str,user:str,port:int):
+    def __init__(self,db:str,password:str,user:str,port:int,host:str="localhost"):
+        missing = [
+            name
+            for name, value in (("DB", db), ("DB_USER", user), ("PORT", port), ("PASSWORD", password))
+            if not value
+        ]
+        if missing:
+            raise ValueError(f"Missing database configuration: {', '.join(missing)}")
+
         self.db = db
         self.user = user
         self.port = port
         self.password = password
+        self.host = host
         self.conn = None
         self.cur = None
 
-        self.DB_URL = "postgresql://" + self.user.lower() + ":" + self.password + "@localhost:" + self.port + "/" + self.db;
+        self.conninfo = make_conninfo(
+            dbname=self.db,
+            user=self.user.lower(),
+            password=self.password,
+            host=self.host,
+            port=int(self.port),
+        )
 
     @classmethod
     def from_env(cls) -> "VectorDatabase":
-        """Build a database from the DB/PASSWORD/DB_USER/PORT environment variables."""
+        """Build a database from the DB/PASSWORD/DB_USER/PORT/DB_HOST environment variables."""
         load_dotenv()
         return cls(
             os.getenv("DB"),
             os.getenv("PASSWORD"),
             os.getenv("DB_USER"),
             os.getenv("PORT"),
+            os.getenv("DB_HOST", "localhost"),
         )
 
     def connect(self):
-        self.conn = psycopg.connect(self.DB_URL)
+        self.conn = psycopg.connect(self.conninfo)
         self.cur = self.conn.cursor()
     
     def disconnect(self):

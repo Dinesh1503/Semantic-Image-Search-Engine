@@ -1,14 +1,16 @@
+# Credentials come from engine/.env (gitignored):
+#   docker compose --env-file engine/.env up -d
 services:
   db:
     image: pgvector/pgvector:pg16
     container_name: vector_db
     restart: unless-stopped
-    environment: 
-      - POSTGRES_USER=max
-      - POSTGRES_PASSWORD=pass
-      - POSTGRES_DB=image_db
-    ports: 
-      - "5432:5432"
+    environment:
+      - POSTGRES_USER=${DB_USER:?DB_USER is required}
+      - POSTGRES_PASSWORD=${PASSWORD:?PASSWORD is required}
+      - POSTGRES_DB=${DB:?DB is required}
+    ports:
+      - "127.0.0.1:5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
 

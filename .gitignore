@@ -8,3 +8,18 @@ wheels/
 
 # Virtual environments
 .venv
+
+# Secrets / local configuration
+.env
+.env.*
+!.env.example
+
+# Node
+node_modules/
+
+# OS / editor cruft
+.DS_Store
+
+# Local data and archives
+data.json
+*.zip
