@@ -3,14 +3,28 @@ class EmbeddingModel():
     
     def __init__(self):
 
-        import mlx.core as mx
-        from mlx_embeddings.utils import load
+        try:
+            import mlx.core as mx
+            from mlx_embeddings.utils import load
+        except ImportError as e:
+            raise ImportError(
+                "mlx and mlx_embeddings are required for EmbeddingModel and are only "
+                "available on Apple Silicon"
+            ) from e
 
         self.model_name = "mlx-community/Qwen3-Embedding-0.6B-4bit-DWQ"
         self.mx = mx
-        self.model,self.tokenizer = load(self.model_name)
+        try:
+            self.model,self.tokenizer = load(self.model_name)
+        except Exception as e:
+            raise RuntimeError(
+                f"Failed to load embedding model '{self.model_name}'"
+            ) from e
 
     def get_vector_embeddings(self,text:str)->list:
+
+        if not text or not text.strip():
+            raise ValueError("Cannot embed empty text")
 
         tokens = self.mx.array(self.tokenizer.encode(text))
         tokens = tokens[None, :] 

@@ -1,3 +1,4 @@
+import os
 from abc import ABC,abstractmethod
 
 class VlmModel(ABC):
@@ -9,10 +10,18 @@ class MlxModel(VlmModel):
 
     def __init__(self):
         
-        from mlx_vlm import load,generate
+        try:
+            from mlx_vlm import load,generate
+        except ImportError as e:
+            raise ImportError(
+                "mlx_vlm is required for MlxModel and is only available on Apple Silicon"
+            ) from e
 
         self.model_name = "mlx-community/Qwen3-VL-8B-Instruct-4bit"
-        self.model, self.processor = load(self.model_name)
+        try:
+            self.model, self.processor = load(self.model_name)
+        except Exception as e:
+            raise RuntimeError(f"Failed to load VLM model '{self.model_name}'") from e
         self.generate_captions_func = generate
 
         PROMPT_TEXT = """Analyze this image for an image retrieval database.
@@ -36,7 +45,10 @@ class MlxModel(VlmModel):
                             )
                             
     def generate(self,image_path:str):
-        
+
+        if not os.path.isfile(image_path):
+            raise FileNotFoundError(f"Image not found: {image_path}")
+
         response = self.generate_captions_func(self.model,
                                                self.processor,
                                                image=[image_path],
