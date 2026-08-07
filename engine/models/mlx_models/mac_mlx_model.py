@@ -1,43 +1,18 @@
-from abc import ABC,abstractmethod
-from PIL import Image
-import re
 from mlx_vlm import load,generate
 
-class VlmModel(ABC):
-    @abstractmethod
-    def generate_captions(self):
-        pass 
+from models.abstract_model_class import VlmModel
+from models.prompts import qwen_vl_chat_prompt
 
 class MlxModel(VlmModel):
 
     def __init__(self):
-        
-       
 
         self.model_name = "mlx-community/Qwen3-VL-8B-Instruct-4bit"
         self.model, self.processor = load(self.model_name)
         self.generate_captions_func = generate
 
-        PROMPT_TEXT = """Analyze this image for an image retrieval database.
-                        Do not use poetic, emotional, or subjective language.
-                        Instead, provide a structured, factual breakdown of the visual elements.
+        self.system_prompt = qwen_vl_chat_prompt()
 
-                        Please describe the image using these four categories:
-                        1. MAIN SUBJECTS: List the specific physical objects visible.
-                        2. SPATIAL LAYOUT: Where are these objects located?
-                        3. ATTRIBUTES: Describe colors, textures, and states.
-                        4. ENVIRONMENT: Describe the lighting, weather, and time of day.
-
-                        Start the description directly with the main subject. Output as a single concise paragraph."""
-        
-        self.system_prompt = (
-                                "<|im_start|>user\n"
-                                "<|vision_start|><|image_pad|><|vision_end|>" 
-                                f"{PROMPT_TEXT}\n"
-                                "<|im_end|>\n"
-                                "<|im_start|>assistant\n"
-                            )
-                            
     def generate_captions(self,image_path:str):
         
         response = self.generate_captions_func(self.model,

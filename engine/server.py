@@ -1,12 +1,12 @@
 from fastapi import FastAPI,WebSocket, WebSocketDisconnect, Request
 from inference import Inference
 from contextlib import asynccontextmanager
-import os,asyncio
-from dotenv import load_dotenv
+import asyncio
 from database.db import VectorDatabase
 from pydantic import BaseModel
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
+from paths import images_dir
 
 class SearchRequest(BaseModel):
     caption: str
@@ -14,23 +14,15 @@ class SearchRequest(BaseModel):
 @asynccontextmanager
 async def lifespan(app:FastAPI):
 
-    load_dotenv()
-    
     app.state.inf = Inference()
 
-
-    db_name = os.getenv("DB")
-    user = os.getenv("DB_USER")
-    port = os.getenv("PORT")
-    password = os.getenv("PASSWORD")
-
-    app.state.db = VectorDatabase(db_name,password,user,port)
+    app.state.db = VectorDatabase.from_env()
 
     app.state.db.connect()
 
     yield 
 
-    await app.state.db.disconnect()
+    app.state.db.disconnect()
 
 
 app = FastAPI(lifespan=lifespan)
@@ -40,7 +32,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-app.mount("/images", StaticFiles(directory="/Users/dinesh/Project/Semantic Image Search Engine/engine/test_data/a"), name="images")
+app.mount("/images", StaticFiles(directory=images_dir()), name="images")
 
 @app.websocket("/ws")
 async def websocket_connection(websocket: WebSocket):

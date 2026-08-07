@@ -4,6 +4,10 @@ import os
 import numpy as np
 import json
 class VectorDatabase():
+
+    INSERT_QUERY = """INSERT INTO images (name,path,caption,embedding,metadata) 
+                    VALUES (%s,%s,%s,%s,%s)"""
+
     def __init__(self,db:str,password:str,user:str,port:int):
         self.db = db
         self.user = user
@@ -12,8 +16,18 @@ class VectorDatabase():
         self.conn = None
         self.cur = None
 
-        self.DB_URL = "postgresql://" + self.user.lower() + ":" + self.password + "@localhost:" + self.port + "/" + self.db; 
-       
+        self.DB_URL = "postgresql://" + self.user.lower() + ":" + self.password + "@localhost:" + self.port + "/" + self.db;
+
+    @classmethod
+    def from_env(cls) -> "VectorDatabase":
+        """Build a database from the DB/PASSWORD/DB_USER/PORT environment variables."""
+        load_dotenv()
+        return cls(
+            os.getenv("DB"),
+            os.getenv("PASSWORD"),
+            os.getenv("DB_USER"),
+            os.getenv("PORT"),
+        )
 
     def connect(self):
         self.conn = psycopg.connect(self.DB_URL)
@@ -22,15 +36,42 @@ class VectorDatabase():
     def disconnect(self):
         self.cur.close()
         self.conn.close()
-    
+
+    def _execute(self,query:str,params=None,many:bool=False,error_message:str="Database Error"):
+        """Run a statement, commit it and roll back with a message when it fails.
+
+        Returns True on success, False when the statement raised.
+        """
+        try:
+            if many:
+                self.cur.executemany(query,params)
+            else:
+                self.cur.execute(query,params)
+            self.conn.commit()
+            return True
+
+        except Exception as e:
+            self.conn.rollback()
+            print(f"{error_message}: {e}")
+            return False
+
+    def _fetch(self,query:str,params=None,error_message:str="Database Error")->list:
+        """Run a query and return its rows, rolling back and returning [] on failure."""
+        try:
+            self.cur.execute(query,params)
+            return self.cur.fetchall()
+
+        except Exception as e:
+            self.conn.rollback()
+            print(f"{error_message}: {e}")
+            return []
+
     def delete_all_data(self):
-        self.cur.execute("DELETE FROM images")
-        self.conn.commit()
+        self._execute("DELETE FROM images",error_message="Error deleting data")
     
     def create_table(self):
-        try:
-            self.cur.execute("CREATE EXTENSION IF NOT EXISTS vector;")
-            self.cur.execute("""
+        self._execute("CREATE EXTENSION IF NOT EXISTS vector;",error_message="Database Creation Error")
+        created = self._execute("""
                     CREATE TABLE IF NOT EXISTS images (
                         id SERIAL PRIMARY KEY,
                         name text,
@@ -39,70 +80,32 @@ class VectorDatabase():
                         embedding vector(1024),
                         metadata JSONB DEFAULT '{}'::jsonb
                     );
-                """)
-            self.conn.commit()
+                """,error_message="Database Creation Error")
+        if created:
             print("Table verified/created.")
-        
-        except Exception as e:
-            self.conn.rollback()
-            print(f"Database Creation Error: {e}")
-        
-        except Exception as e:
-            print(f"Database Creation Error: {e}")
+
+    def drop_table(self):
+        self._execute("DROP TABLE IF EXISTS images;",error_message="Error dropping table")
 
     def check_data(self):
-        self.cur.execute("SELECT COUNT(*) FROM images;")
-        count = self.cur.fetchone()[0]
-        print(count)
+        count = self._fetch("SELECT COUNT(*) FROM images;",error_message="Error counting data")
+        print(count[0][0] if count else 0)
 
-        self.cur.execute("SELECT name,path from images;")
-        rows = self.cur.fetchall()
-        print(rows) 
+        print(self._fetch("SELECT name,path from images;",error_message="Error reading data"))
 
     def test_populate_db(self):
-        
-        query = """INSERT INTO images (name,path,caption,embedding,metadata) 
-                    VALUES (%s,%s,%s,%s,%s)"""
         
         embedding = np.random.rand(1024).tolist()
         caption = "img1"
         metadata = json.dumps({"a":"b"})
         data = ('img1.jpg','test_data/img1.jpg',caption,embedding,metadata)
-        
-        try:
-            self.cur.execute(query,data)
-            self.conn.commit()
 
-        except Exception as e:
-            print("Error Entrying Data",e)
-    
-
-    # def data_not_null_check(data:tuple)->bool:
-    #     (name,path,caption,embedding,metadata) = data
-
-    #     if name is None or name is "":
-
+        self._execute(self.INSERT_QUERY,data,error_message="Error Entrying Data")
 
     def add_data(self,data:list)->str:
-        # name, path, caption, embedding, metadata = data
-        
-        # # 2. Convert the metadata dictionary into a JSON string
-        # if isinstance(metadata, dict):
-        #     metadata = json.dumps(metadata)
-            
-        # 3. Repack the variables into a new tuple ready for the database
-        # formatted_data = (name, path, caption, embedding, metadata)
 
-        query = """INSERT INTO images (name,path,caption,embedding,metadata) 
-                    VALUES (%s,%s,%s,%s,%s)"""
-
-        try: 
-            self.cur.executemany(query,data)
-            self.conn.commit()
+        if self._execute(self.INSERT_QUERY,data,many=True,error_message="Error adding data to database"):
             print("Data Added Sucessfully")
-        
-        except Exception as e:
-            print(f"Error adding data to database {e}")
 
     def retrieve_data(self,query_embedding:list,limit:int=5):
 
@@ -114,35 +117,7 @@ class VectorDatabase():
         ORDER BY embedding <=> %s::vector ASC 
         LIMIT %s"""
 
-        try: 
-            self.cur.execute(query,(query_embedding,query_embedding,limit))
-            results = self.cur.fetchall()
-            
-            print(f"Found {len(results)} matches!")
-            return results
+        results = self._fetch(query,(query_embedding,query_embedding,limit),error_message="Error during search")
 
-        except Exception as e:
-            self.conn.rollback() 
-            print(f"Error during search: {e}")
-            return []
-
-
-
-# if __name__ == "__main__":
-#     load_dotenv()
-
-#     db = os.getenv("DB")
-#     user = os.getenv("DB_USER")
-#     port = os.getenv("PORT")
-#     password = os.getenv("PASSWORD")
-
-#     inf = VectorDatabase(db,password,user,port)
-#     inf.connect()
-#     inf.create_table()
-#     inf.test_populate_db()
-#     inf.check_data()
-
-
-        
-
-
+        print(f"Found {len(results)} matches!")
+        return results
