@@ -3,6 +3,7 @@ import torch
 from PIL import Image
 import re
 from models.abstract_model_class import VlmModel
+from models.device import torch_device
 from paths import resolve_model_source
 from models.prompts import CAPTION_PROMPT
 class HuggingFaceModel(VlmModel):
@@ -12,14 +13,15 @@ class HuggingFaceModel(VlmModel):
         self.model_id = "Qwen/Qwen3-VL-4B-Instruct"
 
         source, local_only, cache_dir = resolve_model_source(self.model_id, "qwen3-vl-4b")
+        device = torch_device()
 
         self.processor = AutoProcessor.from_pretrained(source, local_files_only=local_only)
         self.model = AutoModelForImageTextToText.from_pretrained(
             source,
             local_files_only=local_only,
             cache_dir=None if local_only else cache_dir,
-            device_map="mps",
-            dtype=torch.float16
+            device_map=device,
+            dtype=torch.float32 if device == "cpu" else torch.float16
         )
 
         self.PROMPT_TEXT = CAPTION_PROMPT
@@ -62,6 +64,9 @@ class HuggingFaceModel(VlmModel):
 
         # explicitly free memory after each image
         del inputs, outputs
-        torch.mps.empty_cache()
+        if self.model.device.type == "mps":
+            torch.mps.empty_cache()
+        elif self.model.device.type == "cuda":
+            torch.cuda.empty_cache()
         print("\n Caption: ",caption)
         return caption

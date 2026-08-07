@@ -37,10 +37,11 @@ class VectorDatabase():
         self.cur.close()
         self.conn.close()
 
-    def _execute(self,query:str,params=None,many:bool=False,error_message:str="Database Error"):
+    def _execute(self,query:str,params=None,many:bool=False,error_message:str="Database Error",raise_on_error:bool=False):
         """Run a statement, commit it and roll back with a message when it fails.
 
-        Returns True on success, False when the statement raised.
+        Returns True on success, False when the statement raised, unless
+        `raise_on_error` is set and the caller cannot continue without it.
         """
         try:
             if many:
@@ -53,6 +54,8 @@ class VectorDatabase():
         except Exception as e:
             self.conn.rollback()
             print(f"{error_message}: {e}")
+            if raise_on_error:
+                raise
             return False
 
     def _fetch(self,query:str,params=None,error_message:str="Database Error")->list:
@@ -67,7 +70,7 @@ class VectorDatabase():
             return []
 
     def delete_all_data(self):
-        self._execute("DELETE FROM images",error_message="Error deleting data")
+        self._execute("DELETE FROM images",error_message="Error deleting data",raise_on_error=True)
     
     def create_table(self):
         self._execute("CREATE EXTENSION IF NOT EXISTS vector;",error_message="Database Creation Error")
@@ -85,7 +88,7 @@ class VectorDatabase():
             print("Table verified/created.")
 
     def drop_table(self):
-        self._execute("DROP TABLE IF EXISTS images;",error_message="Error dropping table")
+        self._execute("DROP TABLE IF EXISTS images;",error_message="Error dropping table",raise_on_error=True)
 
     def check_data(self):
         count = self._fetch("SELECT COUNT(*) FROM images;",error_message="Error counting data")

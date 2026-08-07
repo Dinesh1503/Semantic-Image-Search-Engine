@@ -1,5 +1,6 @@
 from sentence_transformers import SentenceTransformer
 from models.abstract_model_class import EmbeddingModel
+from models.device import torch_device
 from paths import resolve_model_source
 class HuggingFaceEmbeddingModel(EmbeddingModel):
 
@@ -9,7 +10,7 @@ class HuggingFaceEmbeddingModel(EmbeddingModel):
 
         source, local_only, _ = resolve_model_source(self.model_name, "qwen3-embedding-0.6b")
 
-        self.model = SentenceTransformer(source, local_files_only=local_only, device="mps")
+        self.model = SentenceTransformer(source, local_files_only=local_only, device=torch_device())
 
         self.user_query_prompt = "query"
     
