@@ -159,8 +159,10 @@ Serves static image files.
 
 The system uses environment variables for configuration:
 
-- `DATABASE_URL`: PostgreSQL connection string
+- `DB`, `DB_USER`, `PASSWORD`, `PORT`: PostgreSQL connection settings
 - `IMAGES_PATH`: Path to image directory for static serving
+- `MODELS_PATH`: Directory holding locally downloaded model weights (defaults to `engine/models`)
+- `DEVICE`: Torch device for the models (`mps`, `cuda`, `cpu`); auto-detected when unset
 
 ## License
 
