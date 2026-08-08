@@ -157,10 +157,24 @@ Serves static image files.
 
 ## Configuration
 
-The system uses environment variables for configuration:
+Configuration lives in `engine/.env`, which is gitignored. Copy `engine/.env.example` and fill in real values:
 
-- `DATABASE_URL`: PostgreSQL connection string
-- `IMAGES_PATH`: Path to image directory for static serving
+| Variable | Purpose |
+|----------|---------|
+| `DB`, `DB_USER`, `PASSWORD`, `DB_HOST`, `PORT` | PostgreSQL connection details |
+| `IMAGES_PATH` | Absolute path to the directory served under `/images`. The `engine/test_data/a` default is not committed, so set this or the server refuses to start |
+| `MODELS_PATH` | Directory of locally downloaded model weights (default `engine/models`) |
+| `ALLOWED_ORIGINS` | Comma-separated CORS origins (default `http://localhost:5173`) |
+| `API_KEY` | When set, `/search` requires a matching `X-API-Key` header |
+| `HOST`, `SERVER_PORT` | Bind address for `python server.py` (default `127.0.0.1:8000`) |
+
+Start the database with the same credentials:
+
+```bash
+docker compose --env-file engine/.env up -d
+```
+
+Never commit `engine/.env`; rotate any credential that has been committed.
 
 ## License
 
